@@ -5,7 +5,7 @@ import { Play, PauseCircle, Trophy, Skull, RotateCcw } from 'lucide-react';
 export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPaused, hasStarted, setHasStarted, onRestart }) {
   const canvasRef = useRef(null);
   const { updateScore } = useContext(GameContext);
-  const [matchResult, setMatchResult] = useState(null); // 'win' | 'lose' | null
+  const [matchResult, setMatchResult] = useState(null);
 
   const gameState = useRef({
     paddleY: 150,
@@ -18,12 +18,14 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
     cpuScore: 0
   });
 
+  const requestRef = useRef(null);
+
   const triggerGameOver = useCallback((result) => {
     setMatchResult(result);
     onGameOver(gameState.current.playerScore, gameState.current.cpuScore, result);
   }, [onGameOver]);
 
-  // Tecla ESC para Pausa y ESPACIO para Saque
+  // Manejo de Teclado (ESC -> Pausa / ESPACIO -> Saque)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && hasStarted && !matchResult) {
@@ -42,11 +44,11 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    // Configuración física según la dificultad seleccionada
+    // DIFICULTAD REALMENTE NOTABLE
     const diffSettings = {
-      facil: { speedX: 4, cpuSpeed: 2.2, accel: 1.02 },
-      medio: { speedX: 5.5, cpuSpeed: 3.5, accel: 1.05 },
-      dificil: { speedX: 7, cpuSpeed: 5.0, accel: 1.08 }
+      facil: { baseSpeedX: 4, cpuSpeed: 2.2, accel: 1.02 },
+      medio: { baseSpeedX: 6, cpuSpeed: 4.2, accel: 1.05 },
+      dificil: { baseSpeedX: 8.5, cpuSpeed: 7.2, accel: 1.08 } // Bola rápida + IA ágil
     };
 
     const currentDiff = diffSettings[difficulty] || diffSettings.facil;
@@ -60,9 +62,11 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
 
     canvas.addEventListener('mousemove', handleMouseMove);
 
-    const gameInterval = setInterval(() => {
+    // LOOP ultra fluido mediante requestAnimationFrame
+    const gameLoop = () => {
       if (!hasStarted || isPaused || matchResult) {
         renderCanvas(ctx, gameState.current);
+        requestRef.current = requestAnimationFrame(gameLoop);
         return;
       }
 
@@ -71,48 +75,59 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
       state.ballX += state.ballSpeedX;
       state.ballY += state.ballSpeedY;
 
-      // Rebotes superior/inferior
+      // Rebote Superior / Inferior
       if (state.ballY <= 5 || state.ballY >= 395) state.ballSpeedY *= -1;
 
-      // Seguimiento IA de la CPU
-      if (state.ballY > state.cpuY + 40) state.cpuY += currentDiff.cpuSpeed;
-      else if (state.ballY < state.cpuY + 40) state.cpuY -= currentDiff.cpuSpeed;
+      // IA CPU (Seguimiento suavizado en dificil)
+      const cpuCenter = state.cpuY + 40;
+      if (state.ballY > cpuCenter + 5) {
+        state.cpuY += currentDiff.cpuSpeed;
+      } else if (state.ballY < cpuCenter - 5) {
+        state.cpuY -= currentDiff.cpuSpeed;
+      }
 
       // Colisión Paleta Jugador
       if (state.ballX <= 25 && state.ballY >= state.paddleY && state.ballY <= state.paddleY + 80) {
         state.ballSpeedX = Math.abs(state.ballSpeedX) * currentDiff.accel;
+        // Variación del ángulo según dónde impacte la bola
+        const deltaY = state.ballY - (state.paddleY + 40);
+        state.ballSpeedY = deltaY * 0.15;
       }
 
       // Colisión Paleta CPU
       if (state.ballX >= 575 && state.ballY >= state.cpuY && state.ballY <= state.cpuY + 80) {
         state.ballSpeedX = -Math.abs(state.ballSpeedX) * currentDiff.accel;
+        const deltaY = state.ballY - (state.cpuY + 40);
+        state.ballSpeedY = deltaY * 0.15;
       }
 
       // Punto CPU
       if (state.ballX <= 0) {
         state.cpuScore += 1;
         updateScore(0, 1);
-        resetBall(1, currentDiff.speedX);
+        resetBall(1, currentDiff.baseSpeedX);
       }
 
       // Punto Jugador
       if (state.ballX >= 600) {
         state.playerScore += 1;
         updateScore(1, 0);
-        resetBall(-1, currentDiff.speedX);
+        resetBall(-1, currentDiff.baseSpeedX);
       }
 
       renderCanvas(ctx, state);
 
-      // Evaluación de victoria a los 5 puntos o derrota a los 10
+      // Evaluación Fin de Juego (Gane 5 / Derrota 10)
       if (state.playerScore >= 5) {
-        clearInterval(gameInterval);
         triggerGameOver('win');
       } else if (state.cpuScore >= 10) {
-        clearInterval(gameInterval);
         triggerGameOver('lose');
+      } else {
+        requestRef.current = requestAnimationFrame(gameLoop);
       }
-    }, 1000 / 60);
+    };
+
+    requestRef.current = requestAnimationFrame(gameLoop);
 
     function resetBall(direction, baseSpeed) {
       gameState.current.ballX = 300;
@@ -145,7 +160,7 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
 
     return () => {
       canvas.removeEventListener('mousemove', handleMouseMove);
-      clearInterval(gameInterval);
+      if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
   }, [difficulty, hasStarted, isPaused, matchResult, updateScore, triggerGameOver, setHasStarted]);
 
@@ -163,7 +178,6 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
         }}
       />
 
-      {/* OVERLAY: PREPARADO PARA EL SAQUE */}
       {!hasStarted && !isPaused && !matchResult && (
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
@@ -177,7 +191,6 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
         </div>
       )}
 
-      {/* OVERLAY: PAUSA */}
       {isPaused && !matchResult && (
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
@@ -197,7 +210,6 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
         </div>
       )}
 
-      {/* OVERLAY: PANTALLA DE VICTORIA (5 PUNTOS) */}
       {matchResult === 'win' && (
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
@@ -213,7 +225,6 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
         </div>
       )}
 
-      {/* OVERLAY: PANTALLA DE DERROTA (10 PUNTOS CPU) */}
       {matchResult === 'lose' && (
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
