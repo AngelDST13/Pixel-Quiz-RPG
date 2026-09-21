@@ -2,7 +2,7 @@ import { createContext, useState } from 'react';
 
 export const GameContext = createContext();
 
-export const GameProvider = ({ children }) => {
+export function GameProvider({ children }) {
   const [player, setPlayer] = useState({
     name: '',
     hp: 100,
@@ -39,4 +39,6 @@ export const GameProvider = ({ children }) => {
       {children}
     </GameContext.Provider>
   );
-};
+}
+
+export default GameProvider;
