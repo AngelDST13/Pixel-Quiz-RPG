@@ -29,17 +29,23 @@ export default function Game() {
       date: new Date().toISOString().split('T')[0]
     };
 
+    // 1. Guardar en json-server local
     fetch('http://localhost:3001/scores', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(recordPayload)
     }).catch((err) => console.error('Error db.json:', err));
 
+    // 2. Enviar a n8n Webhook con manejo de CORS
     fetch('http://localhost:5678/webhook/pixel-quiz-game', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json'
+      },
       body: JSON.stringify(recordPayload)
-    }).catch((err) => console.log('n8n Webhook ausente:', err));
+    })
+    .then((res) => console.log('Respuesta recibida de n8n:', res))
+    .catch((err) => console.log('Error enviando a n8n:', err));
 
     setTimeout(() => navigate('/puntajes'), 3500);
   };
