@@ -29,14 +29,12 @@ export default function Game() {
       date: new Date().toISOString().split('T')[0]
     };
 
-    // 1. Guardado en json-server
     fetch('http://localhost:3001/scores', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(recordPayload)
     }).catch((err) => console.error('Error db.json:', err));
 
-    // 2. Envío al Webhook de n8n
     fetch('http://localhost:5678/webhook/pixel-quiz-game', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -47,7 +45,7 @@ export default function Game() {
   };
 
   return (
-    <div style={{ maxWidth: '650px', margin: '1.5rem auto', padding: '0 1rem' }}>
+    <div style={{ maxWidth: '820px', margin: '1.5rem auto', padding: '0 1rem' }}>
       <Scoreboard
         isPaused={isPaused}
         onTogglePause={() => setIsPaused((prev) => !prev)}

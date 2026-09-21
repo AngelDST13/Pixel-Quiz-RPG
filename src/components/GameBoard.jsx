@@ -20,14 +20,14 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
   });
 
   const requestRef = useRef(null);
-  const lastTimeRef = useRef(performance.now());
+  const lastTimeRef = useRef(0);
 
   const triggerGameOver = useCallback((result) => {
     setMatchResult(result);
     onGameOver(gameState.current.playerScore, gameState.current.cpuScore, result);
   }, [onGameOver]);
 
-  // Manejo de ESC para la pausa
+  // Manejo de ESC para Pausa y ESPACIO para Saque
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && hasStarted && !matchResult) {
@@ -46,7 +46,7 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    // Dificultades con velocidades optimizadas
+    // Dificultades optimizadas
     const diffSettings = {
       facil: { baseSpeedX: 320, cpuSpeed: 180, accel: 1.02 },
       medio: { baseSpeedX: 450, cpuSpeed: 300, accel: 1.04 },
@@ -55,7 +55,6 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
 
     const currentDiff = diffSettings[difficulty] || diffSettings.facil;
 
-    // Inicialización del movimiento de bola
     if (gameState.current.ballSpeedX === 4) {
       gameState.current.ballSpeedX = currentDiff.baseSpeedX;
       gameState.current.ballSpeedY = 200;
@@ -70,12 +69,11 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
 
     canvas.addEventListener('mousemove', handleMouseMove);
 
-    // Motor basado en Delta Time para 100% fluidez en cualquier tasa de refresco
     const gameLoop = (time) => {
+      if (!lastTimeRef.current) lastTimeRef.current = time;
       const deltaTime = (time - lastTimeRef.current) / 1000;
       lastTimeRef.current = time;
 
-      // Limitar saltos extremos de deltaTime
       const dt = Math.min(deltaTime, 0.05);
 
       if (!hasStarted || isPaused || matchResult) {
@@ -123,14 +121,14 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
           state.ballSpeedY = deltaY * 8;
         }
 
-        // Punto CPU -> Continuación Automática
+        // Punto CPU
         if (state.ballX <= 0) {
           state.cpuScore += 1;
           updateScore(0, 1);
           autoResetBall(1, currentDiff.baseSpeedX);
         }
 
-        // Punto Jugador -> Continuación Automática
+        // Punto Jugador
         if (state.ballX >= 600) {
           state.playerScore += 1;
           updateScore(1, 0);
@@ -140,7 +138,6 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
 
       renderCanvas(ctx, state);
 
-      // Evaluación Fin de Juego (5 pts Gane / 10 pts CPU Derrota)
       if (state.playerScore >= 5) {
         triggerGameOver('win');
       } else if (state.cpuScore >= 10) {
@@ -150,10 +147,8 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
       }
     };
 
-    lastTimeRef.current = performance.now();
     requestRef.current = requestAnimationFrame(gameLoop);
 
-    // Reinicio automático fluido sin pausar la partida
     function autoResetBall(direction, baseSpeed) {
       gameState.current.isResetting = true;
       gameState.current.ballX = 300;
@@ -165,7 +160,7 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
         gameState.current.ballSpeedX = baseSpeed * direction;
         gameState.current.ballSpeedY = (Math.random() > 0.5 ? 200 : -200);
         gameState.current.isResetting = false;
-      }, 800); // Pequeña pausa de 0.8s antes de relanzar
+      }, 700);
     }
 
     function renderCanvas(context, state) {
@@ -179,15 +174,12 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
       context.lineTo(300, 400);
       context.stroke();
 
-      // Paleta Jugador
       context.fillStyle = '#00e5ff';
       context.fillRect(10, state.paddleY, 12, 80);
 
-      // Paleta CPU
       context.fillStyle = '#ff0055';
       context.fillRect(578, state.cpuY, 12, 80);
 
-      // Bola
       context.fillStyle = '#ffcc00';
       context.fillRect(state.ballX - 5, state.ballY - 5, 10, 10);
     }
@@ -199,100 +191,108 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
   }, [difficulty, hasStarted, isPaused, matchResult, updateScore, triggerGameOver]);
 
   return (
-    <div style={{ position: 'relative', width: '600px', margin: '1rem auto' }}>
-      {/* Kirby Animado Izquierda */}
-      <img
-        src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/39.gif"
-        alt="Kirby Pixel Style"
-        className="retro-kirby"
-        style={{ position: 'absolute', top: '-45px', left: '10px', width: '40px', height: '40px' }}
-      />
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '1.5rem', margin: '1rem auto' }}>
+      {/* Mascota Retro Izquierda (Fuera del tablero) */}
+      <div style={{ textAlign: 'center' }}>
+        <img
+          src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/39.gif"
+          alt="Jigglypuff Retro"
+          className="retro-kirby"
+          style={{ width: '50px', height: '50px', display: 'block', margin: '0 auto' }}
+        />
+        <span style={{ fontSize: '0.45rem', color: '#ff0055', marginTop: '0.4rem', display: 'block' }}>TEAM PLAYER</span>
+      </div>
 
-      {/* Yoshi Animado Derecha */}
-      <img
-        src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/143.gif"
-        alt="Yoshi Retro Style"
-        className="retro-yoshi"
-        style={{ position: 'absolute', top: '-45px', right: '10px', width: '40px', height: '40px' }}
-      />
+      <div style={{ position: 'relative', width: '600px' }}>
+        <canvas
+          ref={canvasRef}
+          width={600}
+          height={400}
+          style={{
+            border: '4px solid #fff',
+            boxShadow: '-4px 0 0 0 #ff0055, 4px 0 0 0 #ff0055, 0 -4px 0 0 #ff0055, 0 4px 0 0 #ff0055',
+            display: 'block',
+            cursor: 'none'
+          }}
+        />
 
-      <canvas
-        ref={canvasRef}
-        width={600}
-        height={400}
-        style={{
-          border: '4px solid #fff',
-          boxShadow: '-4px 0 0 0 #ff0055, 4px 0 0 0 #ff0055, 0 -4px 0 0 #ff0055, 0 4px 0 0 #ff0055',
-          display: 'block',
-          cursor: 'none'
-        }}
-      />
-
-      {/* OVERLAY DE INICIO ÚNICO */}
-      {!hasStarted && !isPaused && !matchResult && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: 'rgba(9, 8, 16, 0.85)', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: '1rem'
-        }}>
-          <h2 style={{ fontSize: '0.85rem', color: '#ffcc00' }} className="animated-title">¡LISTO PARA EL PRIMER SAQUE!</h2>
-          <button className="pixel-btn" onClick={() => setHasStarted(true)}>
-            <Play size={16} /> [ PRESIONA ESPACIO O CLICK PARA COMEMZAR ]
-          </button>
-        </div>
-      )}
-
-      {/* OVERLAY DE PAUSA */}
-      {isPaused && !matchResult && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: 'rgba(9, 8, 16, 0.9)', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: '1rem'
-        }}>
-          <PauseCircle size={48} color="#ff0055" className="animated-title" />
-          <h2 style={{ fontSize: '0.9rem', color: '#ff0055' }}>JUEGO EN PAUSA</h2>
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className="pixel-btn" onClick={() => setIsPaused(false)}>
-              [ REANUDAR ]
-            </button>
-            <button className="pixel-btn" onClick={onRestart} style={{ background: '#00e5ff', color: '#000' }}>
-              [ REINICIAR ]
+        {/* OVERLAY SAQUE INICIAL */}
+        {!hasStarted && !isPaused && !matchResult && (
+          <div style={{
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            backgroundColor: 'rgba(9, 8, 16, 0.85)', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: '1rem'
+          }}>
+            <h2 style={{ fontSize: '0.85rem', color: '#ffcc00' }} className="animated-title">¡LISTO PARA EL PRIMER SAQUE!</h2>
+            <button className="pixel-btn" onClick={() => setHasStarted(true)}>
+              <Play size={16} /> [ PRESIONA ESPACIO O CLICK ]
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* OVERLAY DE VICTORIA */}
-      {matchResult === 'win' && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: 'rgba(9, 8, 16, 0.95)', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: '1rem'
-        }}>
-          <Trophy size={60} color="#ffcc00" className="victory-banner" />
-          <h2 style={{ fontSize: '1.1rem', color: '#00ff66' }}>¡VICTORIA ÉPICA!</h2>
-          <p style={{ fontSize: '0.55rem', color: '#ffcc00' }}>ALCANZASTE LOS 5 PUNTOS PRIMERO</p>
-          <button className="pixel-btn" onClick={onRestart}>
-            <RotateCcw size={16} /> [ JUGAR DE NUEVO ]
-          </button>
-        </div>
-      )}
+        {/* OVERLAY PAUSA */}
+        {isPaused && !matchResult && (
+          <div style={{
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            backgroundColor: 'rgba(9, 8, 16, 0.9)', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: '1rem'
+          }}>
+            <PauseCircle size={48} color="#ff0055" className="animated-title" />
+            <h2 style={{ fontSize: '0.9rem', color: '#ff0055' }}>JUEGO EN PAUSA</h2>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button className="pixel-btn" onClick={() => setIsPaused(false)}>
+                [ REANUDAR ]
+              </button>
+              <button className="pixel-btn" onClick={onRestart} style={{ background: '#00e5ff', color: '#000' }}>
+                [ REINICIAR ]
+              </button>
+            </div>
+          </div>
+        )}
 
-      {/* OVERLAY DE DERROTA */}
-      {matchResult === 'lose' && (
-        <div style={{
-          position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-          backgroundColor: 'rgba(9, 8, 16, 0.95)', display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: '1rem'
-        }}>
-          <Skull size={60} color="#ff0055" className="animated-title" />
-          <h2 style={{ fontSize: '1.1rem', color: '#ff0055' }}>GAME OVER</h2>
-          <p style={{ fontSize: '0.55rem', color: '#aaa' }}>LA CPU ALCANZÓ LOS 10 PUNTOS</p>
-          <button className="pixel-btn" onClick={onRestart} style={{ background: '#00e5ff', color: '#000' }}>
-            <RotateCcw size={16} /> [ REINTENTAR ]
-          </button>
-        </div>
-      )}
+        {/* OVERLAY VICTORIA */}
+        {matchResult === 'win' && (
+          <div style={{
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            backgroundColor: 'rgba(9, 8, 16, 0.95)', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: '1rem'
+          }}>
+            <Trophy size={60} color="#ffcc00" className="victory-banner" />
+            <h2 style={{ fontSize: '1.1rem', color: '#00ff66' }}>¡VICTORIA ÉPICA!</h2>
+            <p style={{ fontSize: '0.55rem', color: '#ffcc00' }}>ALCANZASTE LOS 5 PUNTOS PRIMERO</p>
+            <button className="pixel-btn" onClick={onRestart}>
+              <RotateCcw size={16} /> [ JUGAR DE NUEVO ]
+            </button>
+          </div>
+        )}
+
+        {/* OVERLAY DERROTA */}
+        {matchResult === 'lose' && (
+          <div style={{
+            position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+            backgroundColor: 'rgba(9, 8, 16, 0.95)', display: 'flex', flexDirection: 'column',
+            alignItems: 'center', justifyContent: 'center', gap: '1rem'
+          }}>
+            <Skull size={60} color="#ff0055" className="animated-title" />
+            <h2 style={{ fontSize: '1.1rem', color: '#ff0055' }}>GAME OVER</h2>
+            <p style={{ fontSize: '0.55rem', color: '#aaa' }}>LA CPU ALCANZÓ LOS 10 PUNTOS</p>
+            <button className="pixel-btn" onClick={onRestart} style={{ background: '#00e5ff', color: '#000' }}>
+              <RotateCcw size={16} /> [ REINTENTAR ]
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Mascota Retro Derecha (Fuera del tablero) */}
+      <div style={{ textAlign: 'center' }}>
+        <img
+          src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/143.gif"
+          alt="Snorlax Retro"
+          className="retro-yoshi"
+          style={{ width: '50px', height: '50px', display: 'block', margin: '0 auto' }}
+        />
+        <span style={{ fontSize: '0.45rem', color: '#00e5ff', marginTop: '0.4rem', display: 'block' }}>TEAM CPU</span>
+      </div>
     </div>
   );
 }
