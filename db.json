@@ -8,6 +8,16 @@
       "difficulty": "dificil",
       "status": "Victoria",
       "date": "2026-09-21"
+    },
+    {
+      "id": "XZY27nwHUOw",
+      "player": "Angel",
+      "score": 7,
+      "cpuScore": 10,
+      "difficulty": "facil",
+      "status": "Derrota",
+      "date": "2026-09-21"
     }
-  ]
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
 }
