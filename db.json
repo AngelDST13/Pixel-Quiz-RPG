@@ -3,13 +3,47 @@
     {
       "id": 1,
       "level": 1,
-      "title": "Bosque del Silencio",
-      "question": "Un duende te pide la sintaxis correcta para declarar un estado en React.",
+      "title": "Nivel 1: El Bosque de las Variables",
+      "enemy": "Duende del Estado",
+      "question": "Te enfrentas al Duende del Estado. ¿Cuál es la forma correcta de inicializar un estado en React?",
       "options": [
-        { "text": "const [state, setState] = useState(0)", "correct": true, "xp": 50 },
-        { "text": "let state = React.state(0)", "correct": false, "xp": 0 }
+        { "id": "a", "text": "const [hp, setHp] = useState(100);", "correct": true, "xp": 50, "damage": 0 },
+        { "id": "b", "text": "let hp = React.createState(100);", "correct": false, "xp": 0, "damage": 25 },
+        { "id": "c", "text": "const hp = 100;", "correct": false, "xp": 0, "damage": 20 }
+      ]
+    },
+    {
+      "id": 2,
+      "level": 2,
+      "title": "Nivel 2: La Caverna del Effect",
+      "enemy": "Golem de Ciclos Infinitos",
+      "question": "El Golem te ataca con un bucle infinito. ¿Cómo ejecutas un useEffect una sola vez al montar el componente?",
+      "options": [
+        { "id": "a", "text": "useEffect(() => {}, [always]);", "correct": false, "xp": 0, "damage": 30 },
+        { "id": "b", "text": "useEffect(() => {}, []);", "correct": true, "xp": 75, "damage": 0 },
+        { "id": "c", "text": "useEffect(() => {});", "correct": false, "xp": 0, "damage": 25 }
+      ]
+    },
+    {
+      "id": 3,
+      "level": 3,
+      "title": "Nivel 3: El Castillo del Enrutado",
+      "enemy": "Hechicero Router",
+      "question": "Para leer un parámetro dinámico como ':nivel' desde la URL en React Router, usas:",
+      "options": [
+        { "id": "a", "text": "useParams()", "correct": true, "xp": 100, "damage": 0 },
+        { "id": "b", "text": "useRoute()", "correct": false, "xp": 0, "damage": 35 },
+        { "id": "c", "text": "useQuery()", "correct": false, "xp": 0, "damage": 25 }
       ]
     }
   ],
-  "players": []
+  "players": [
+    {
+      "id": "1",
+      "name": "Angel Salazar",
+      "xp": 225,
+      "lives": 100,
+      "date": "2026-09-21"
+    }
+  ]
 }
