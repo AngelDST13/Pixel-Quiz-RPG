@@ -1,13 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
 :root {
-  --bg-color: #12101e;
-  --card-bg: #1e1b32;
-  --primary-color: #ff0055;
-  --secondary-color: #00e5ff;
-  --gold-color: #ffcc00;
-  --text-color: #ffffff;
-  --pixel-border: 4px solid #ffffff;
+  --bg-color: #090810;
+  --card-bg: #141226;
+  --primary: #ff0055;
+  --secondary: #00e5ff;
+  --gold: #ffcc00;
+  --green: #00ff66;
 }
 
 * {
@@ -18,59 +17,72 @@
 body {
   margin: 0;
   background-color: var(--bg-color);
-  color: var(--text-color);
+  color: #fff;
   image-rendering: pixelated;
+  overflow-x: hidden;
 }
 
-/* Bordes Pixelados 8-bit */
+/* Animaciones */
+@keyframes pulseGlow {
+  0% { box-shadow: 0 0 5px var(--primary); }
+  50% { box-shadow: 0 0 20px var(--primary), 0 0 10px var(--secondary); }
+  100% { box-shadow: 0 0 5px var(--primary); }
+}
+
+@keyframes floatAnim {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes bounceWin {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1) rotate(2deg); }
+}
+
 .pixel-box {
   background: var(--card-bg);
-  border: 4px solid #000;
-  box-shadow: 
-    -4px 0 0 0 #fff,
-     4px 0 0 0 #fff,
-     0 -4px 0 0 #fff,
-     0  4px 0 0 #fff;
-  padding: 1.5rem;
-  margin: 1rem 0;
+  border: 4px solid #fff;
+  box-shadow: -4px 0 0 0 var(--primary), 4px 0 0 0 var(--primary), 0 -4px 0 0 var(--primary), 0 4px 0 0 var(--primary);
+  padding: 1.2rem;
+  animation: pulseGlow 4s infinite alternate;
 }
 
 .pixel-btn {
-  background: var(--primary-color);
+  background: var(--primary);
   color: #fff;
-  border: 4px solid #000;
-  box-shadow: -4px 0 0 0 #000, 4px 0 0 0 #000, 0 -4px 0 0 #000, 0 4px 0 0 #000;
-  padding: 0.8rem 1.2rem;
-  font-size: 0.7rem;
+  border: 3px solid #000;
+  box-shadow: -3px 0 0 0 #fff, 3px 0 0 0 #fff, 0 -3px 0 0 #fff, 0 3px 0 0 #fff;
+  padding: 0.8rem 1rem;
+  font-size: 0.6rem;
   cursor: pointer;
-  transition: transform 0.1s;
+  transition: all 0.15s ease;
   text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
 }
 
 .pixel-btn:hover {
   transform: scale(1.05);
   background: #ff3377;
+  box-shadow: -3px 0 0 0 var(--secondary), 3px 0 0 0 var(--secondary), 0 -3px 0 0 var(--secondary), 0 3px 0 0 var(--secondary);
 }
 
 .pixel-input {
   background: #000;
-  color: var(--secondary-color);
-  border: 2px solid var(--secondary-color);
+  color: var(--secondary);
+  border: 2px solid var(--secondary);
   padding: 0.8rem;
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   outline: none;
 }
 
-/* Animaciones */
-@keyframes shake {
-  0% { transform: translate(1px, 1px) rotate(0deg); }
-  20% { transform: translate(-3px, 0px) rotate(1deg); }
-  40% { transform: translate(1px, -1px) rotate(-1deg); }
-  60% { transform: translate(-3px, 1px) rotate(0deg); }
-  80% { transform: translate(1px, 1px) rotate(1deg); }
-  100% { transform: translate(0px, 0px) rotate(0deg); }
+.animated-title {
+  animation: floatAnim 3s ease-in-out infinite;
 }
 
-.enemy-shake {
-  animation: shake 0.5s infinite alternate;
+.victory-banner {
+  animation: bounceWin 0.8s infinite alternate;
 }
