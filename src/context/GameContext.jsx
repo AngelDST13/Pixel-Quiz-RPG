@@ -6,41 +6,32 @@ export default function GameProvider({ children }) {
   const [player, setPlayer] = useState({
     name: '',
     avatarUrl: '',
-    hp: 100,
-    xp: 0,
-    currentLevel: 1
+    score: 0,
+    cpuScore: 0,
+    difficulty: 'facil'
   });
 
-  const resetGame = (playerName) => {
-    // API Externa: Generación de Avatar Pixel Art automático basado en el nombre
-    const avatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(playerName || 'Hero')}`;
-    
+  const resetGame = (playerName, difficulty = 'facil') => {
+    const avatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(playerName || 'PongHero')}`;
     setPlayer({
       name: playerName || 'Héroe Anónimo',
       avatarUrl: avatar,
-      hp: 100,
-      xp: 0,
-      currentLevel: 1
+      score: 0,
+      cpuScore: 0,
+      difficulty
     });
   };
 
-  const updateStats = (damage, gainedXp) => {
+  const updateScore = (playerPoints, cpuPoints) => {
     setPlayer((prev) => ({
       ...prev,
-      hp: Math.max(0, prev.hp - damage),
-      xp: prev.xp + gainedXp
-    }));
-  };
-
-  const nextLevel = () => {
-    setPlayer((prev) => ({
-      ...prev,
-      currentLevel: prev.currentLevel + 1
+      score: prev.score + playerPoints,
+      cpuScore: prev.cpuScore + cpuPoints
     }));
   };
 
   return (
-    <GameContext.Provider value={{ player, setPlayer, resetGame, updateStats, nextLevel }}>
+    <GameContext.Provider value={{ player, setPlayer, resetGame, updateScore }}>
       {children}
     </GameContext.Provider>
   );

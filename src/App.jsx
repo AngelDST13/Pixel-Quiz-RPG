@@ -12,7 +12,7 @@ function App() {
         <main className="content">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/juego/:nivel" element={<Game />} />
+            <Route path="/juego/:dificultad" element={<Game />} />
             <Route path="/puntajes" element={<Leaderboard />} />
           </Routes>
         </main>
