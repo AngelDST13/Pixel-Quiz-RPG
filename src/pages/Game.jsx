@@ -1,4 +1,4 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GameContext } from '../context/GameContext';
 import Scoreboard from '../components/Scoreboard';
@@ -8,6 +8,7 @@ export default function Game() {
   const { dificultad } = useParams();
   const navigate = useNavigate();
   const { player } = useContext(GameContext);
+  const [isPaused, setIsPaused] = useState(false);
 
   const handleGameOver = (finalScore, cpuScore) => {
     const recordPayload = {
@@ -19,14 +20,12 @@ export default function Game() {
       date: new Date().toISOString().split('T')[0]
     };
 
-    // GET/POST al backend local json-server
     fetch('http://localhost:3001/scores', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(recordPayload)
     }).catch((err) => console.error('Error db.json:', err));
 
-    // Webhook POST a n8n
     fetch('http://localhost:5678/webhook/pixel-quiz-game', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -38,8 +37,13 @@ export default function Game() {
 
   return (
     <div style={{ maxWidth: '650px', margin: '1.5rem auto', padding: '0 1rem' }}>
-      <Scoreboard />
-      <GameBoard difficulty={dificultad || 'facil'} onGameOver={handleGameOver} />
+      <Scoreboard isPaused={isPaused} onTogglePause={() => setIsPaused((prev) => !prev)} />
+      <GameBoard
+        difficulty={dificultad || 'facil'}
+        onGameOver={handleGameOver}
+        isPaused={isPaused}
+        setIsPaused={setIsPaused}
+      />
     </div>
   );
 }
