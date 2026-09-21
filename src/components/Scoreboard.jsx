@@ -12,8 +12,8 @@ export default function Scoreboard({ isPaused, onTogglePause, onRestart, hasStar
           <img src={player.avatarUrl} alt="Avatar Pixel" className="animated-title" style={{ width: '48px', height: '48px', border: '2px solid #00e5ff', background: '#000' }} />
         )}
         <div style={{ fontSize: '0.55rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
-          <div>HÉROE: <span style={{ color: '#ffcc00' }}>{player.name || 'Invitado'}</span></div>
-          <div>DIFICULTAD: <span style={{ color: '#00e5ff' }}>{player.difficulty ? player.difficulty.toUpperCase() : 'FÁCIL'}</span></div>
+          <div>P1: <span style={{ color: '#00e5ff' }}>{player.name || 'Jugador 1'}</span></div>
+          <div>P2/CPU: <span style={{ color: '#ff0055' }}>{player.gameMode === '2p' ? player.p2Name : 'CPU'}</span></div>
         </div>
       </div>
 

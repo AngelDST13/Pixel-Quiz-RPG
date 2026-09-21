@@ -4,20 +4,24 @@ import { GameContext } from './GameContext';
 export default function GameProvider({ children }) {
   const [player, setPlayer] = useState({
     name: '',
+    p2Name: 'Jugador 2',
     avatarUrl: '',
     score: 0,
     cpuScore: 0,
-    difficulty: 'facil'
+    difficulty: 'facil',
+    gameMode: '1p'
   });
 
-  const resetGame = (playerName, difficulty = 'facil') => {
+  const resetGame = (playerName, difficulty = 'facil', mode = '1p', secondPlayerName = 'Jugador 2') => {
     const avatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(playerName || 'PongHero')}`;
     setPlayer({
-      name: playerName || 'Héroe Anónimo',
+      name: playerName || 'Jugador 1',
+      p2Name: secondPlayerName || 'Jugador 2',
       avatarUrl: avatar,
       score: 0,
       cpuScore: 0,
-      difficulty
+      difficulty,
+      gameMode: mode
     });
   };
 
