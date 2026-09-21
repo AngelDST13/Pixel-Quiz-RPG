@@ -6,26 +6,8 @@
       "score": 5,
       "cpuScore": 2,
       "difficulty": "dificil",
-      "date": "2026-09-21"
-    },
-    {
-      "id": "owIW0GckUCA",
-      "player": "dd",
-      "score": 0,
-      "cpuScore": 10,
-      "difficulty": "dificil",
-      "status": "Derrota",
-      "date": "2026-09-21"
-    },
-    {
-      "id": "U6b64zgzgi0",
-      "player": "fdsfsd",
-      "score": 0,
-      "cpuScore": 10,
-      "difficulty": "dificil",
-      "status": "Derrota",
+      "status": "Victoria",
       "date": "2026-09-21"
     }
-  ],
-  "$schema": "./node_modules/json-server/schema.json"
+  ]
 }
