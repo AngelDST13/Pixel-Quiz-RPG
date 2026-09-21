@@ -1,10 +1,10 @@
 import { useEffect, useRef, useContext, useCallback } from 'react';
 import { GameContext } from '../context/GameContext';
-import { Play, PauseCircle, RotateCcw } from 'lucide-react';
+import { Play, PauseCircle } from 'lucide-react';
 
 export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPaused, hasStarted, setHasStarted, onRestart }) {
   const canvasRef = useRef(null);
-  const { updateScore, setPlayer } = useContext(GameContext);
+  const { updateScore } = useContext(GameContext);
 
   const gameState = useRef({
     paddleY: 150,
@@ -21,7 +21,6 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
     onGameOver(gameState.current.playerScore, gameState.current.cpuScore);
   }, [onGameOver]);
 
-  // Bloqueo de Pausa con ESC (Solo si el juego ya inició)
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && hasStarted) {
