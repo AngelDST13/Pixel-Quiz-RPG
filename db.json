@@ -1,0 +1,15 @@
+{
+  "scenarios": [
+    {
+      "id": 1,
+      "level": 1,
+      "title": "Bosque del Silencio",
+      "question": "Un duende te pide la sintaxis correcta para declarar un estado en React.",
+      "options": [
+        { "text": "const [state, setState] = useState(0)", "correct": true, "xp": 50 },
+        { "text": "let state = React.state(0)", "correct": false, "xp": 0 }
+      ]
+    }
+  ],
+  "players": []
+}
