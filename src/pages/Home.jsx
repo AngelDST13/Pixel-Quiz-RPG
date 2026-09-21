@@ -2,10 +2,12 @@ import { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GameContext } from '../context/GameContext';
 
-function Home() {
+export default function Home() {
   const [nameInput, setNameInput] = useState('');
   const { resetGame } = useContext(GameContext);
   const navigate = useNavigate();
+
+  const previewAvatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(nameInput || 'Hero')}`;
 
   const handleStart = (e) => {
     e.preventDefault();
@@ -15,25 +17,32 @@ function Home() {
   };
 
   return (
-    <div style={{ padding: '2rem', textAlign: 'center' }}>
-      <h1>Pixel Quiz RPG</h1>
-      <p>Supera los desafíos de React y derrota a las criaturas del código.</p>
+    <div style={{ maxWidth: '500px', margin: '3rem auto', textAlign: 'center', padding: '0 1rem' }}>
+      <div className="pixel-box">
+        <h1 style={{ fontSize: '1.2rem', color: '#ffcc00', marginBottom: '1rem' }}>PIXEL QUIZ RPG</h1>
+        <p style={{ fontSize: '0.6rem', lineHeight: '1.6', color: '#00e5ff' }}>
+          DESAFÍA LAS CRIATURAS DEL CÓDIGO REACT Y REGISTRA TU PUNTAJE EN EL REINO.
+        </p>
 
-      <form onSubmit={handleStart} style={{ marginTop: '2rem' }}>
-        <input
-          type="text"
-          placeholder="Nombre de tu héroe"
-          value={nameInput}
-          onChange={(e) => setNameInput(e.target.value)}
-          style={{ padding: '0.8rem', borderRadius: '4px', border: '1px solid #ccc', marginRight: '0.5rem' }}
-          required
-        />
-        <button type="submit" style={{ padding: '0.8rem 1.5rem', backgroundColor: '#e94560', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-          Comenzar Aventura
-        </button>
-      </form>
+        <div style={{ margin: '1.5rem 0' }}>
+          <img src={previewAvatar} alt="Avatar Preview" style={{ width: '80px', height: '80px', border: '4px solid #00e5ff', background: '#000' }} />
+        </div>
+
+        <form onSubmit={handleStart}>
+          <input
+            className="pixel-input"
+            type="text"
+            placeholder="NOMBRE DEL HÉROE"
+            value={nameInput}
+            onChange={(e) => setNameInput(e.target.value)}
+            style={{ width: '100%', marginBottom: '1rem' }}
+            required
+          />
+          <button className="pixel-btn" type="submit" style={{ width: '100%' }}>
+            [ INICIAR AVENTURA ]
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
-
-export default Home;

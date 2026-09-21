@@ -1,18 +1,23 @@
 import { createContext, useState } from 'react';
 
-const GameContext = createContext();
+export const GameContext = createContext();
 
-function GameProvider({ children }) {
+export default function GameProvider({ children }) {
   const [player, setPlayer] = useState({
     name: '',
+    avatarUrl: '',
     hp: 100,
     xp: 0,
     currentLevel: 1
   });
 
   const resetGame = (playerName) => {
+    // API Externa: Generación de Avatar Pixel Art automático basado en el nombre
+    const avatar = `https://api.dicebear.com/7.x/pixel-art/svg?seed=${encodeURIComponent(playerName || 'Hero')}`;
+    
     setPlayer({
-      name: playerName || player.name,
+      name: playerName || 'Héroe Anónimo',
+      avatarUrl: avatar,
       hp: 100,
       xp: 0,
       currentLevel: 1
@@ -40,6 +45,3 @@ function GameProvider({ children }) {
     </GameContext.Provider>
   );
 }
-
-export { GameContext, GameProvider };
-export default GameProvider;

@@ -1,11 +1,11 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { GameContext } from '../context/GameContext';
 import Scoreboard from '../components/Scoreboard';
 import Card from '../components/Card';
 import LoadingErrorState from '../components/LoadingErrorState';
 
-function Game() {
+export default function Game() {
   const { nivel } = useParams();
   const navigate = useNavigate();
   const { player, updateStats, nextLevel } = useContext(GameContext);
@@ -14,19 +14,41 @@ function Game() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Requisito 2.4: Petición GET para cargar el escenario según el parámetro dinámico
+  const finishGame = useCallback(() => {
+    const finalData = {
+      id: Date.now().toString(),
+      name: player.name || 'Héroe Anónimo',
+      xp: player.xp,
+      lives: player.hp,
+      date: new Date().toISOString().split('T')[0]
+    };
+
+    fetch('http://localhost:3001/players', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(finalData)
+    }).catch((err) => console.error('Error db.json:', err));
+
+    fetch('http://localhost:5678/webhook/pixel-quiz-game', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(finalData)
+    }).catch((err) => console.log('n8n Webhook ausente:', err));
+
+    navigate('/puntajes');
+  }, [player, navigate]);
+
   useEffect(() => {
     setLoading(true);
     fetch(`http://localhost:3001/scenarios?level=${nivel}`)
       .then((res) => {
-        if (!res.ok) throw new Error('No se pudo cargar el nivel');
+        if (!res.ok) throw new Error('Error al obtener nivel');
         return res.json();
       })
       .then((data) => {
         if (data.length > 0) {
           setScenario(data[0]);
         } else {
-          // Fin de los niveles disponibles
           finishGame();
         }
         setLoading(false);
@@ -35,7 +57,7 @@ function Game() {
         setError(err.message);
         setLoading(false);
       });
-  }, [nivel]);
+  }, [nivel, finishGame]);
 
   const handleOptionSelect = (option) => {
     updateStats(option.damage, option.xp);
@@ -49,45 +71,28 @@ function Game() {
     }
   };
 
-  const finishGame = () => {
-    const finalData = {
-      id: Date.now().toString(),
-      name: player.name || 'Héroe Anónimo',
-      xp: player.xp,
-      lives: player.hp,
-      date: new Date().toISOString().split('T')[0]
-    };
+  if (loading || error) return <LoadingErrorState loading={loading} error={error} />;
 
-    // 1. Guardar en db.json (Operación POST)
-    fetch('http://localhost:3001/players', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(finalData)
-    }).catch((err) => console.error('Error al guardar en db.json:', err));
-
-    // 2. Enviar datos al Webhook de n8n (Requisito Sección 3)
-    fetch('http://localhost:5678/webhook/pixel-quiz-game', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(finalData)
-    }).catch((err) => console.log('n8n Webhook no disponible en este momento:', err));
-
-    navigate('/puntajes');
-  };
-
-  if (loading || error) {
-    return <LoadingErrorState loading={loading} error={error} />;
-  }
+  // API de Sprites Pixel Art para los enemigos
+  const enemySprite = scenario ? `https://api.dicebear.com/7.x/bottts/svg?seed=${encodeURIComponent(scenario.enemy)}` : '';
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
+    <div style={{ maxWidth: '650px', margin: '2rem auto', padding: '0 1rem' }}>
       <Scoreboard />
       
       {scenario && (
-        <div style={{ marginTop: '2rem', background: '#1a1a2e', padding: '1.5rem', borderRadius: '8px' }}>
-          <h2>{scenario.title}</h2>
-          <h3>Enemigo: {scenario.enemy}</h3>
-          <p style={{ margin: '1.5rem 0' }}>{scenario.question}</p>
+        <div className="pixel-box">
+          <div style={{ textTransform: 'uppercase', color: '#ffcc00', fontSize: '0.7rem', marginBottom: '1rem' }}>
+            {scenario.title}
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#000', padding: '1rem', marginBottom: '1rem' }}>
+            <img src={enemySprite} alt="Enemigo Pixel" className="enemy-shake" style={{ width: '60px', height: '60px' }} />
+            <div>
+              <div style={{ color: '#ff0055', fontSize: '0.7rem' }}>{scenario.enemy}</div>
+              <p style={{ fontSize: '0.6rem', marginTop: '0.5rem', lineHeight: '1.4' }}>{scenario.question}</p>
+            </div>
+          </div>
 
           <div>
             {scenario.options.map((option) => (
@@ -99,5 +104,3 @@ function Game() {
     </div>
   );
 }
-
-export default Game;

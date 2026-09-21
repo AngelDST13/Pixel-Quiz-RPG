@@ -1,16 +1,14 @@
 import { Link } from 'react-router-dom';
 
-function Navbar() {
+export default function Navbar() {
   return (
-    <nav style={{ display: 'flex', gap: '1rem', padding: '1rem', background: '#1a1a2e', color: '#fff' }}>
-      <h2>Pixel Quiz RPG</h2>
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <Link to="/" style={{ color: '#fff', textDecoration: 'none' }}>Inicio</Link>
-        <Link to="/juego/1" style={{ color: '#fff', textDecoration: 'none' }}>Juego</Link>
-        <Link to="/puntajes" style={{ color: '#fff', textDecoration: 'none' }}>Puntajes</Link>
+    <nav style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem 2rem', background: '#090810', borderBottom: '4px solid #ff0055' }}>
+      <h2 style={{ fontSize: '1rem', color: '#ffcc00', margin: 0 }}>⚔️ PIXEL QUIZ RPG</h2>
+      <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.7rem' }}>
+        <Link to="/" style={{ color: '#00e5ff', textDecoration: 'none' }}>[INICIO]</Link>
+        <Link to="/juego/1" style={{ color: '#00e5ff', textDecoration: 'none' }}>[JUEGO]</Link>
+        <Link to="/puntajes" style={{ color: '#00e5ff', textDecoration: 'none' }}>[PUNTAJES]</Link>
       </div>
     </nav>
   );
 }
-
-export default Navbar;
