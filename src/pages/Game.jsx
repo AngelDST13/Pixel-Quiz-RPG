@@ -7,8 +7,16 @@ import GameBoard from '../components/GameBoard';
 export default function Game() {
   const { dificultad } = useParams();
   const navigate = useNavigate();
-  const { player } = useContext(GameContext);
+  const { player, setPlayer } = useContext(GameContext);
   const [isPaused, setIsPaused] = useState(false);
+  const [hasStarted, setHasStarted] = useState(false);
+
+  const handleRestart = () => {
+    setIsPaused(false);
+    setHasStarted(false);
+    setPlayer((prev) => ({ ...prev, score: 0, cpuScore: 0 }));
+    window.location.reload(); // Recarga limpia del estado del juego
+  };
 
   const handleGameOver = (finalScore, cpuScore) => {
     const recordPayload = {
@@ -37,12 +45,20 @@ export default function Game() {
 
   return (
     <div style={{ maxWidth: '650px', margin: '1.5rem auto', padding: '0 1rem' }}>
-      <Scoreboard isPaused={isPaused} onTogglePause={() => setIsPaused((prev) => !prev)} />
+      <Scoreboard
+        isPaused={isPaused}
+        onTogglePause={() => setIsPaused((prev) => !prev)}
+        onRestart={handleRestart}
+        hasStarted={hasStarted}
+      />
       <GameBoard
         difficulty={dificultad || 'facil'}
         onGameOver={handleGameOver}
         isPaused={isPaused}
         setIsPaused={setIsPaused}
+        hasStarted={hasStarted}
+        setHasStarted={setHasStarted}
+        onRestart={handleRestart}
       />
     </div>
   );

@@ -1,6 +1,5 @@
-import { createContext, useState } from 'react';
-
-export const GameContext = createContext();
+import { useState } from 'react';
+import { GameContext } from './GameContext';
 
 export default function GameProvider({ children }) {
   const [player, setPlayer] = useState({
