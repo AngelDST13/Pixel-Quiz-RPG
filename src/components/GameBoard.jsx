@@ -15,17 +15,19 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
     ballSpeedX: 4,
     ballSpeedY: 3,
     playerScore: 0,
-    cpuScore: 0
+    cpuScore: 0,
+    isResetting: false
   });
 
   const requestRef = useRef(null);
+  const lastTimeRef = useRef(performance.now());
 
   const triggerGameOver = useCallback((result) => {
     setMatchResult(result);
     onGameOver(gameState.current.playerScore, gameState.current.cpuScore, result);
   }, [onGameOver]);
 
-  // Manejo de Teclado (ESC -> Pausa / ESPACIO -> Saque)
+  // Manejo de ESC para la pausa
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape' && hasStarted && !matchResult) {
@@ -44,14 +46,20 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
-    // DIFICULTAD REALMENTE NOTABLE
+    // Dificultades con velocidades optimizadas
     const diffSettings = {
-      facil: { baseSpeedX: 4, cpuSpeed: 2.2, accel: 1.02 },
-      medio: { baseSpeedX: 6, cpuSpeed: 4.2, accel: 1.05 },
-      dificil: { baseSpeedX: 8.5, cpuSpeed: 7.2, accel: 1.08 } // Bola rápida + IA ágil
+      facil: { baseSpeedX: 320, cpuSpeed: 180, accel: 1.02 },
+      medio: { baseSpeedX: 450, cpuSpeed: 300, accel: 1.04 },
+      dificil: { baseSpeedX: 620, cpuSpeed: 520, accel: 1.07 }
     };
 
     const currentDiff = diffSettings[difficulty] || diffSettings.facil;
+
+    // Inicialización del movimiento de bola
+    if (gameState.current.ballSpeedX === 4) {
+      gameState.current.ballSpeedX = currentDiff.baseSpeedX;
+      gameState.current.ballSpeedY = 200;
+    }
 
     const handleMouseMove = (e) => {
       const rect = canvas.getBoundingClientRect();
@@ -62,8 +70,14 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
 
     canvas.addEventListener('mousemove', handleMouseMove);
 
-    // LOOP ultra fluido mediante requestAnimationFrame
-    const gameLoop = () => {
+    // Motor basado en Delta Time para 100% fluidez en cualquier tasa de refresco
+    const gameLoop = (time) => {
+      const deltaTime = (time - lastTimeRef.current) / 1000;
+      lastTimeRef.current = time;
+
+      // Limitar saltos extremos de deltaTime
+      const dt = Math.min(deltaTime, 0.05);
+
       if (!hasStarted || isPaused || matchResult) {
         renderCanvas(ctx, gameState.current);
         requestRef.current = requestAnimationFrame(gameLoop);
@@ -72,52 +86,61 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
 
       let state = gameState.current;
 
-      state.ballX += state.ballSpeedX;
-      state.ballY += state.ballSpeedY;
+      if (!state.isResetting) {
+        state.ballX += state.ballSpeedX * dt;
+        state.ballY += state.ballSpeedY * dt;
 
-      // Rebote Superior / Inferior
-      if (state.ballY <= 5 || state.ballY >= 395) state.ballSpeedY *= -1;
+        // Rebotes
+        if (state.ballY <= 5) {
+          state.ballY = 5;
+          state.ballSpeedY *= -1;
+        } else if (state.ballY >= 395) {
+          state.ballY = 395;
+          state.ballSpeedY *= -1;
+        }
 
-      // IA CPU (Seguimiento suavizado en dificil)
-      const cpuCenter = state.cpuY + 40;
-      if (state.ballY > cpuCenter + 5) {
-        state.cpuY += currentDiff.cpuSpeed;
-      } else if (state.ballY < cpuCenter - 5) {
-        state.cpuY -= currentDiff.cpuSpeed;
-      }
+        // IA CPU
+        const cpuCenter = state.cpuY + 40;
+        if (state.ballY > cpuCenter + 5) {
+          state.cpuY += currentDiff.cpuSpeed * dt;
+        } else if (state.ballY < cpuCenter - 5) {
+          state.cpuY -= currentDiff.cpuSpeed * dt;
+        }
 
-      // Colisión Paleta Jugador
-      if (state.ballX <= 25 && state.ballY >= state.paddleY && state.ballY <= state.paddleY + 80) {
-        state.ballSpeedX = Math.abs(state.ballSpeedX) * currentDiff.accel;
-        // Variación del ángulo según dónde impacte la bola
-        const deltaY = state.ballY - (state.paddleY + 40);
-        state.ballSpeedY = deltaY * 0.15;
-      }
+        // Colisión Paleta Jugador
+        if (state.ballX <= 25 && state.ballY >= state.paddleY && state.ballY <= state.paddleY + 80) {
+          state.ballX = 25;
+          state.ballSpeedX = Math.abs(state.ballSpeedX) * currentDiff.accel;
+          const deltaY = state.ballY - (state.paddleY + 40);
+          state.ballSpeedY = deltaY * 8;
+        }
 
-      // Colisión Paleta CPU
-      if (state.ballX >= 575 && state.ballY >= state.cpuY && state.ballY <= state.cpuY + 80) {
-        state.ballSpeedX = -Math.abs(state.ballSpeedX) * currentDiff.accel;
-        const deltaY = state.ballY - (state.cpuY + 40);
-        state.ballSpeedY = deltaY * 0.15;
-      }
+        // Colisión Paleta CPU
+        if (state.ballX >= 575 && state.ballY >= state.cpuY && state.ballY <= state.cpuY + 80) {
+          state.ballX = 575;
+          state.ballSpeedX = -Math.abs(state.ballSpeedX) * currentDiff.accel;
+          const deltaY = state.ballY - (state.cpuY + 40);
+          state.ballSpeedY = deltaY * 8;
+        }
 
-      // Punto CPU
-      if (state.ballX <= 0) {
-        state.cpuScore += 1;
-        updateScore(0, 1);
-        resetBall(1, currentDiff.baseSpeedX);
-      }
+        // Punto CPU -> Continuación Automática
+        if (state.ballX <= 0) {
+          state.cpuScore += 1;
+          updateScore(0, 1);
+          autoResetBall(1, currentDiff.baseSpeedX);
+        }
 
-      // Punto Jugador
-      if (state.ballX >= 600) {
-        state.playerScore += 1;
-        updateScore(1, 0);
-        resetBall(-1, currentDiff.baseSpeedX);
+        // Punto Jugador -> Continuación Automática
+        if (state.ballX >= 600) {
+          state.playerScore += 1;
+          updateScore(1, 0);
+          autoResetBall(-1, currentDiff.baseSpeedX);
+        }
       }
 
       renderCanvas(ctx, state);
 
-      // Evaluación Fin de Juego (Gane 5 / Derrota 10)
+      // Evaluación Fin de Juego (5 pts Gane / 10 pts CPU Derrota)
       if (state.playerScore >= 5) {
         triggerGameOver('win');
       } else if (state.cpuScore >= 10) {
@@ -127,14 +150,22 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
       }
     };
 
+    lastTimeRef.current = performance.now();
     requestRef.current = requestAnimationFrame(gameLoop);
 
-    function resetBall(direction, baseSpeed) {
+    // Reinicio automático fluido sin pausar la partida
+    function autoResetBall(direction, baseSpeed) {
+      gameState.current.isResetting = true;
       gameState.current.ballX = 300;
       gameState.current.ballY = 200;
-      gameState.current.ballSpeedX = baseSpeed * direction;
-      gameState.current.ballSpeedY = (Math.random() > 0.5 ? 3 : -3);
-      setHasStarted(false);
+      gameState.current.ballSpeedX = 0;
+      gameState.current.ballSpeedY = 0;
+
+      setTimeout(() => {
+        gameState.current.ballSpeedX = baseSpeed * direction;
+        gameState.current.ballSpeedY = (Math.random() > 0.5 ? 200 : -200);
+        gameState.current.isResetting = false;
+      }, 800); // Pequeña pausa de 0.8s antes de relanzar
     }
 
     function renderCanvas(context, state) {
@@ -148,12 +179,15 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
       context.lineTo(300, 400);
       context.stroke();
 
+      // Paleta Jugador
       context.fillStyle = '#00e5ff';
       context.fillRect(10, state.paddleY, 12, 80);
 
+      // Paleta CPU
       context.fillStyle = '#ff0055';
       context.fillRect(578, state.cpuY, 12, 80);
 
+      // Bola
       context.fillStyle = '#ffcc00';
       context.fillRect(state.ballX - 5, state.ballY - 5, 10, 10);
     }
@@ -162,10 +196,26 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
       canvas.removeEventListener('mousemove', handleMouseMove);
       if (requestRef.current) cancelAnimationFrame(requestRef.current);
     };
-  }, [difficulty, hasStarted, isPaused, matchResult, updateScore, triggerGameOver, setHasStarted]);
+  }, [difficulty, hasStarted, isPaused, matchResult, updateScore, triggerGameOver]);
 
   return (
     <div style={{ position: 'relative', width: '600px', margin: '1rem auto' }}>
+      {/* Kirby Animado Izquierda */}
+      <img
+        src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/39.gif"
+        alt="Kirby Pixel Style"
+        className="retro-kirby"
+        style={{ position: 'absolute', top: '-45px', left: '10px', width: '40px', height: '40px' }}
+      />
+
+      {/* Yoshi Animado Derecha */}
+      <img
+        src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/143.gif"
+        alt="Yoshi Retro Style"
+        className="retro-yoshi"
+        style={{ position: 'absolute', top: '-45px', right: '10px', width: '40px', height: '40px' }}
+      />
+
       <canvas
         ref={canvasRef}
         width={600}
@@ -178,19 +228,21 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
         }}
       />
 
+      {/* OVERLAY DE INICIO ÚNICO */}
       {!hasStarted && !isPaused && !matchResult && (
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
           backgroundColor: 'rgba(9, 8, 16, 0.85)', display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', gap: '1rem'
         }}>
-          <h2 style={{ fontSize: '0.85rem', color: '#ffcc00' }} className="animated-title">¡LISTO PARA EL SAQUE!</h2>
+          <h2 style={{ fontSize: '0.85rem', color: '#ffcc00' }} className="animated-title">¡LISTO PARA EL PRIMER SAQUE!</h2>
           <button className="pixel-btn" onClick={() => setHasStarted(true)}>
-            <Play size={16} /> [ PRESIONA ESPACIO O CLICK ]
+            <Play size={16} /> [ PRESIONA ESPACIO O CLICK PARA COMEMZAR ]
           </button>
         </div>
       )}
 
+      {/* OVERLAY DE PAUSA */}
       {isPaused && !matchResult && (
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
@@ -210,6 +262,7 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
         </div>
       )}
 
+      {/* OVERLAY DE VICTORIA */}
       {matchResult === 'win' && (
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
@@ -225,6 +278,7 @@ export default function GameBoard({ difficulty, onGameOver, isPaused, setIsPause
         </div>
       )}
 
+      {/* OVERLAY DE DERROTA */}
       {matchResult === 'lose' && (
         <div style={{
           position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',

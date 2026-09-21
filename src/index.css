@@ -86,3 +86,23 @@ body {
 .victory-banner {
   animation: bounceWin 0.8s infinite alternate;
 }
+/* Personajes Retro Animados */
+@keyframes pixelFloat {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pixelWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+.retro-kirby {
+  animation: pixelFloat 2.5s ease-in-out infinite, pixelWiggle 4s ease-in-out infinite;
+}
+
+.retro-yoshi {
+  animation: pixelFloat 3s ease-in-out infinite;
+}
